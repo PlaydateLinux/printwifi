@@ -32,39 +32,29 @@ int eventHandler(PlaydateAPI* pd, PDSystemEvent event, uint32_t arg)
 
 		// Note: If you set an update callback in the kEventInit handler, the system assumes the game is pure C and doesn't run any Lua code in the game
 		pd->system->setUpdateCallback(update, pd);
+#ifdef TARGET_PLAYDATE
+		int (*pd_getAccessPointCount)(void) = (void*)0x0805b215;
+		int access_point_count = pd_getAccessPointCount();
+		if (access_point_count == 0) {
+			pd->system->error("no wifi");
+			return 0;
+		}
+		const char* (*pd_getAccessPointSSID)(int) = (void*)0x0805b269;
+		const char* ssid = pd_getAccessPointSSID(0);
+		if (!ssid) {
+			pd->system->error("no ssid");
+			return 0;
+		}
+		const char* (*pd_getPasswordForSSID)(const char*) = (void*)0x0805b315;
+		const char* password = pd_getPasswordForSSID(ssid);
+		pd->system->error("%s:%s", ssid, password);
+		return 0;
+#endif
 	}
 	
 	return 0;
 }
 
-
-#define TEXT_WIDTH 86
-#define TEXT_HEIGHT 16
-
-int x = (400-TEXT_WIDTH)/2;
-int y = (240-TEXT_HEIGHT)/2;
-int dx = 1;
-int dy = 2;
-
-static int update(void* userdata)
-{
-	PlaydateAPI* pd = userdata;
-	
-	pd->graphics->clear(kColorWhite);
-	pd->graphics->setFont(font);
-	pd->graphics->drawText("Hello World!", strlen("Hello World!"), kASCIIEncoding, x, y);
-
-	x += dx;
-	y += dy;
-	
-	if ( x < 0 || x > LCD_COLUMNS - TEXT_WIDTH )
-		dx = -dx;
-	
-	if ( y < 0 || y > LCD_ROWS - TEXT_HEIGHT )
-		dy = -dy;
-        
-	pd->system->drawFPS(0,0);
-
-	return 1;
+static int update(void* userdata) {
+	return 0;
 }
-
